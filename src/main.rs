@@ -7,6 +7,21 @@ mod prelude {
 
 use prelude::*;
 
+fn move_player(
+    keyboard_input: Res<Input<KeyCode>>,
+    mut players: Query<&mut Transform, With<Player>>,
+) {
+    for mut transform in players.iter_mut() {
+        keyboard_input.get_pressed().for_each(|key| match key {
+            KeyCode::W => transform.translation.x += 0.2,
+            KeyCode::S => transform.translation.x -= 0.2,
+            KeyCode::A => transform.translation.z -= 0.2,
+            KeyCode::D => transform.translation.z += 0.2,
+            _ => {}
+        });
+    }
+}
+
 fn setup(
     commands: &mut Commands,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -26,6 +41,8 @@ fn setup(
             material: materials.add(Color::rgb(1.0, 0.2, 0.2).into()),
             ..Default::default()
         })
+        .with(Player)
+        .with(Velocity(Vec3::new(0.0, 0.0, 0.0)))
         .spawn(LightBundle {
             transform: Transform::from_translation(Vec3::new(4.0, 8.0, 4.0)),
             ..Default::default()
@@ -41,5 +58,6 @@ fn main() {
     App::build()
         .add_plugins(DefaultPlugins)
         .add_startup_system(setup.system())
+        .add_system(move_player.system())
         .run();
 }
