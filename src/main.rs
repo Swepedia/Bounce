@@ -7,19 +7,29 @@ mod prelude {
 
 use prelude::*;
 
-fn move_player(
+fn player_input(
     keyboard_input: Res<Input<KeyCode>>,
-    mut players: Query<&mut Transform, With<Player>>,
+    time: Res<Time>,
+    mut players: Query<&mut Velocity, With<Player>>,
 ) {
-    for mut transform in players.iter_mut() {
+    let delta = time.delta_seconds();
+    for mut velocity in players.iter_mut() {
         keyboard_input.get_pressed().for_each(|key| match key {
-            KeyCode::W => transform.translation.x += 0.2,
-            KeyCode::S => transform.translation.x -= 0.2,
-            KeyCode::A => transform.translation.z -= 0.2,
-            KeyCode::D => transform.translation.z += 0.2,
+            KeyCode::W => velocity.0.x += 0.2 * delta,
+            KeyCode::S => velocity.0.x -= 0.2 * delta,
+            KeyCode::A => velocity.0.z -= 0.2 * delta,
+            KeyCode::D => velocity.0.z += 0.2 * delta,
             _ => {}
         });
     }
+}
+
+fn movement(mut physics_objects: Query<(&mut Transform, &Velocity)>) {
+    physics_objects
+        .iter_mut()
+        .for_each(|(mut transform, velocity)| {
+            transform.translation += velocity.0;
+        })
 }
 
 fn setup(
@@ -58,6 +68,7 @@ fn main() {
     App::build()
         .add_plugins(DefaultPlugins)
         .add_startup_system(setup.system())
-        .add_system(move_player.system())
+        .add_system(player_input.system())
+        .add_system(movement.system())
         .run();
 }
